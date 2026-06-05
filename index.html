@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PMPS Control 360</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=1.0.23">
 </head>
 <body class="is-login">
   <main>
@@ -41,10 +41,7 @@
             <img src="assets/pmps-logo.png" alt="PMPS" data-logo>
             <span class="logo-fallback" aria-hidden="true">PMPS</span>
           </div>
-          <div>
-            <strong>PMPS</strong>
-            <span>Control 360</span>
-          </div>
+          <span class="sidebar-system-name">Control 360</span>
         </div>
 
         <nav class="module-nav" aria-label="M&oacute;dulos por gerencia">
@@ -55,6 +52,7 @@
           <button type="button" data-view="kanban" data-module="Kanban" data-area="Seguimiento">Kanban</button>
           <button type="button" data-view="calendar" data-module="Calendario" data-area="Calendario operativo">Calendario</button>
           <button type="button" data-view="management" data-module="Gerencias" data-area="Panel administrativo" data-admin-only>Gerencias</button>
+          <button type="button" data-view="audit" data-module="Bit&aacute;cora" data-area="Auditor&iacute;a" data-admin-only>Bit&aacute;cora</button>
 
           <p>Operaciones</p>
           <button type="button" data-view="area" data-area-key="Produccion" data-module="Producci&oacute;n" data-area="Gerencia de Producci&oacute;n">Producci&oacute;n</button>
@@ -85,8 +83,9 @@
             </div>
           </div>
           <div class="topbar-actions">
-            <span class="status-pill">Sin base de datos</span>
+            <span class="status-pill" id="data-status" data-state="loading">Conectando Appwrite...</span>
             <div class="user-chip" id="user-chip">Sin sesi&oacute;n</div>
+            <button class="logout-button" id="logout-button" type="button">Cerrar sesi&oacute;n</button>
           </div>
         </header>
 
@@ -96,6 +95,6 @@
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=1.0.23"></script>
 </body>
 </html>
