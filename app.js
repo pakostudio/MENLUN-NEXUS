@@ -193,6 +193,11 @@ let benefits = [
   { saving: 65000, timeReduction: "10 horas mensuales", incidentReduction: "15%", improvements: "Visibilidad de gasto extraordinario por ruta", financialImpact: 65000 },
 ];
 
+let lessons = [
+  { rowId: "lec-001", date: "2026-06-18", area: "Logistica", context: "Liberación documental de entregas", lesson: "La evidencia debe validarse antes de liberar la ruta, no después de la entrega.", action: "Integrar checklist obligatorio a la tarea de liberación.", owner: "Guillermo Nieto", evidence: "mapa-ruta-v1.pdf" },
+  { rowId: "lec-002", date: "2026-06-19", area: "Mantenimiento", context: "Reincidencia del compresor", lesson: "Cerrar la orden sin causa raíz mantiene el riesgo operativo abierto.", action: "Exigir diagnóstico y acción preventiva antes del cierre.", owner: "José Luis Sánchez", evidence: "orden-servicio.pdf" },
+];
+
 diagnosticBase = diagnosticBase.map((item, index) => ({ rowId: item.rowId || `diag-${index + 1}`, ...item }));
 interviews = interviews.map((item, index) => ({ rowId: item.rowId || `ent-${index + 1}`, ...item }));
 painMap = painMap.map((item, index) => ({ rowId: item.rowId || `dolor-${index + 1}`, ...item }));
@@ -202,6 +207,7 @@ workPlan = workPlan.map((item, index) => ({ rowId: item.rowId || `plan-${index +
 agreements = agreements.map((item, index) => ({ rowId: item.rowId || `acu-${index + 1}`, ...item }));
 riskRegister = riskRegister.map((item, index) => ({ rowId: item.rowId || `risk-${index + 1}`, ...item }));
 benefits = benefits.map((item, index) => ({ rowId: item.rowId || `ben-${index + 1}`, ...item }));
+lessons = lessons.map((item, index) => ({ rowId: item.rowId || `lec-${index + 1}`, ...item }));
 projects = projects.map((item, index) => ({ rowId: item.rowId || `proy-${index + 1}`, ...item }));
 subtasks = subtasks.map((item, index) => ({ rowId: item.rowId || `sub-${index + 1}`, ...item }));
 incidents = incidents.map((item, index) => ({ rowId: item.rowId || `inc-${index + 1}`, ...item }));
@@ -427,6 +433,7 @@ async function initializeAppData() {
       remoteAgreements,
       remoteRisks,
       remoteBenefits,
+      remoteLessons,
     ] = await Promise.all([
       listRows(TABLES.gerencias),
       listRows(TABLES.usuarios),
@@ -449,6 +456,7 @@ async function initializeAppData() {
       listRowsOptional(TABLES.acuerdos),
       listRowsOptional(TABLES.riesgos),
       listRowsOptional(TABLES.beneficios),
+      listRowsOptional(TABLES.lecciones),
     ]);
 
     if (remoteGerencias.length) {
@@ -509,6 +517,7 @@ async function initializeAppData() {
     if (remoteAgreements.length) agreements = remoteAgreements.map(mapAgreementRow);
     if (remoteRisks.length) riskRegister = remoteRisks.map(mapRiskRow);
     if (remoteBenefits.length) benefits = remoteBenefits.map(mapBenefitRow);
+    if (remoteLessons.length) lessons = remoteLessons.map(mapLessonRow);
 
     appwriteOnline = true;
     appwriteDataLoaded = true;
@@ -897,7 +906,7 @@ function permissionsForRow(tableId, data) {
     return permissionsForArea(areaKeyFromLabel(data.area || data.jefatura), { adminOnlyUpdate: true });
   }
 
-  if ([TABLES.diagnosticoBase, TABLES.entrevistas, TABLES.mapaDolor, TABLES.diagnosticoEjecutivo].includes(tableId)) {
+  if ([TABLES.diagnosticoBase, TABLES.entrevistas, TABLES.mapaDolor, TABLES.diagnosticoEjecutivo, TABLES.lecciones].includes(tableId)) {
     return permissionsForArea(areaKeyFromLabel(data.area || data.areaAfectada), { adminOnlyUpdate: true });
   }
 
@@ -982,6 +991,7 @@ function transformModules() {
     agreements: { table: TABLES.acuerdos, data: () => agreements, set: (items) => { agreements = items; }, render: renderAgreements, prefix: "acu", label: "acuerdo", fields: [["agreement", "Acuerdo", "textarea"], ["date", "Fecha", "date"], ["owner", "Responsable", "text"], ["area", "Área", "area"], ["priority", "Prioridad", "priority"], ["due", "Fecha compromiso", "date"], ["evidence", "Evidencia", "text"], ["status", "Estado", "executionStatus"]] },
     risks: { table: TABLES.riesgos, data: () => riskRegister, set: (items) => { riskRegister = items; }, render: renderRisks, prefix: "risk", label: "riesgo", fields: [["risk", "Riesgo", "textarea"], ["probability", "Probabilidad", "text"], ["impact", "Impacto", "text"], ["mitigation", "Plan de mitigación", "textarea"], ["owner", "Responsable", "text"]] },
     benefits: { table: TABLES.beneficios, data: () => benefits, set: (items) => { benefits = items; }, render: renderBenefits, prefix: "ben", label: "beneficio", fields: [["saving", "Ahorro generado", "number"], ["timeReduction", "Reducción de tiempos", "text"], ["incidentReduction", "Reducción de incidencias", "text"], ["improvements", "Mejoras implementadas", "textarea"], ["financialImpact", "Impacto financiero", "number"]] },
+    lessons: { table: TABLES.lecciones, data: () => lessons, set: (items) => { lessons = items; }, render: renderLessons, prefix: "lec", label: "lección", fields: [["date", "Fecha", "date"], ["area", "Área", "area"], ["context", "Contexto", "text"], ["lesson", "Lección aprendida", "textarea"], ["action", "Aplicación futura", "textarea"], ["owner", "Responsable", "text"], ["evidence", "Evidencia", "optionalText"]] },
   };
 }
 
@@ -1135,7 +1145,7 @@ function transformFieldHtml(prefix, key, label, type, value = "") {
   if (type === "evidenceStatus") return selectTransformField(id, label, ["cargada", "validada", "faltante", "rechazada"], value);
   if (type === "optionalDate") return `<label>${label}<input id="${id}" type="date" value="${escapeHtml(value || "")}"></label>`;
   if (type === "optionalText") return `<label>${label}<input id="${id}" type="text" value="${escapeHtml(value || "")}"></label>`;
-  if (type === "file") return `<label class="field-wide">${label}<input id="${id}" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp"></label>`;
+  if (type === "file") return `<label class="field-wide">${label}<input id="${id}" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.webp,.zip,.mp4,.mov"></label>`;
   return `<label>${label}<input id="${id}" type="${type}" value="${escapeHtml(value || "")}" required></label>`;
 }
 
@@ -1285,6 +1295,10 @@ function mapBenefitRow(row) {
   return { rowId: row.$id, saving: Number(row.ahorroGenerado || 0), timeReduction: row.reduccionTiempos || "", incidentReduction: row.reduccionIncidencias || "", improvements: row.mejorasImplementadas || "", financialImpact: Number(row.impactoFinanciero || 0) };
 }
 
+function mapLessonRow(row) {
+  return { rowId: row.$id, date: formatDate(row.fecha), area: areaKeyFromLabel(row.area), context: row.contexto || "", lesson: row.leccion || "", action: row.aplicacion || "", owner: row.responsable || "", evidence: row.evidencia || "" };
+}
+
 function reportToAppwriteData(report) {
   return {
     fecha: toIsoDate(report.date),
@@ -1320,6 +1334,7 @@ function transformToAppwriteData(moduleKey, item) {
     agreements: { acuerdo: item.agreement, fecha: toIsoDate(item.date), area: labelForArea(item.area), responsable: item.owner, prioridad: item.priority, fechaCompromiso: toIsoDate(item.due), evidencia: item.evidence, estado: item.status },
     risks: { riesgo: item.risk, probabilidad: item.probability, impacto: item.impact, planMitigacion: item.mitigation, responsable: item.owner },
     benefits: { ahorroGenerado: Number(item.saving || 0), reduccionTiempos: item.timeReduction, reduccionIncidencias: item.incidentReduction, mejorasImplementadas: item.improvements, impactoFinanciero: Number(item.financialImpact || 0) },
+    lessons: { fecha: toIsoDate(item.date), area: labelForArea(item.area), contexto: item.context, leccion: item.lesson, aplicacion: item.action, responsable: item.owner, evidencia: item.evidence },
   };
   return map[moduleKey];
 }
@@ -2001,6 +2016,7 @@ function navigate(view, title, area, areaKey) {
   if (view === "agreements") renderAgreements();
   if (view === "risks") renderRisks();
   if (view === "benefits") renderBenefits();
+  if (view === "lessons") renderLessons();
   if (view === "direction-dashboard") renderDirectionDashboard();
   if (view === "executive") renderExecutiveDashboard();
   if (view === "carmen") renderCarmenPanel();
@@ -2855,6 +2871,31 @@ function renderBenefits() {
       ]))}
     </section>
   `;
+}
+
+function renderLessons() {
+  const items = visibleByArea(lessons);
+  appContent.innerHTML = `
+    ${sectionHeading("Lecciones aprendidas", "Conocimiento reutilizable para evitar reincidencias", scopeText())}
+    ${transformToolbar("lessons")}
+    <section class="executive-grid">
+      ${metricCard("Lecciones registradas", items.length)}
+      ${metricCard("Áreas involucradas", new Set(items.map((item) => item.area)).size)}
+      ${metricCard("Con evidencia", items.filter((item) => item.evidence).length)}
+      ${metricCard("Aplicaciones definidas", items.filter((item) => item.action).length)}
+    </section>
+    <section class="content-card">
+      ${renderTable(["Fecha", "Área", "Contexto", "Lección", "Aplicación futura", "Responsable", "Evidencia", "Acción"], items.map((item) => [
+        item.date,
+        labelForArea(item.area),
+        item.context,
+        item.lesson,
+        item.action,
+        item.owner,
+        evidenceCell(item.evidence),
+        transformActions("lessons", item.rowId),
+      ]), "wide-table")}
+    </section>`;
 }
 
 function renderDirectionDashboard() {

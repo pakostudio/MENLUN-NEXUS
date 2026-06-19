@@ -1,187 +1,84 @@
-# MENLUN Control 360
+# MENLUN NEXUS
 
-MENLUN Control 360 es una app web estatica para operar y supervisar reportes internos por gerencia. Esta construido con HTML, CSS y JavaScript puro, conectado a Appwrite Cloud como backend operativo.
+MENLUN NEXUS es la plataforma de gestión, ejecución y control operativo de MENLUN. Funciona como capa superior de seguimiento sobre MicroSip: MicroSip conserva facturación, inventarios, compras, clientes, productos y cuentas; NEXUS controla proyectos, responsables, compromisos, evidencias, indicadores, riesgos y decisiones.
 
-El sistema usa identidad visual PMPS: Arial, azul marino `#0B2A4A`, cyan `#00A7D8`, blanco `#FFFFFF` y gris claro `#F4F7FA`.
+La aplicación está construida con HTML, CSS y JavaScript puro, usa identidad PMPS y se conecta con Appwrite Cloud.
 
-## Accesos iniciales
+## Accesos
 
-| Usuario visible | Rol | Clave |
+| Usuario | Alcance | PIN |
 | --- | --- | --- |
-| Administrador General | Acceso total | `0000` |
-| Moisés Prado / Almacén | Jefatura | `0001` |
-| Guillermo Nieto / Logística | Jefatura | `0002` |
-| José Luis Sánchez / Mantenimiento | Jefatura | `0003` |
-| José Carlos González / Ventas | Jefatura | `0004` |
+| Administrador General | Control total | `0000` |
+| Dirección General | Consulta ejecutiva | `0099` |
+| Moisés Prado / Almacén | Solo Almacén | `0001` |
+| Guillermo Nieto / Logística | Solo Logística | `0002` |
+| José Luis Sánchez / Mantenimiento | Solo Mantenimiento | `0003` |
+| José Carlos González / Ventas | Solo Ventas | `0004` |
 
-Appwrite Auth requiere contrasenas tecnicas de minimo 8 caracteres. La interfaz de MENLUN Control 360 valida claves cortas de operacion (`0000`, `0001`, etc.) y mantiene la sesion real en Appwrite.
+La interfaz valida el PIN operativo y mantiene una sesión real de Appwrite Auth. Las contraseñas técnicas de Appwrite no se exponen en el frontend.
 
-## Roles
+## Arquitectura funcional
 
-- **Administrador General:** ve todos los modulos, gerencias, reportes, autorizaciones y dashboards.
-- **Direccion General:** consulta informacion ejecutiva y reportes, sin edicion.
-- **Jefatura:** ve solo su area, sus reportes, sus tareas, captura, kanban y calendario.
+- **Dirección:** dashboard ejecutivo, Dashboard Carmen y centro automático de alertas.
+- **Ejecución:** proyectos, tareas, subtareas, acuerdos, incidencias, reuniones, evidencias y KPIs.
+- **Vistas:** lista, Kanban, calendario, Timeline, Gantt, Pipeline y reportes.
+- **Transformación:** diagnóstico base, entrevistas, mapa de dolor, diagnóstico ejecutivo, estrategia, plan de trabajo, seguimiento, riesgos, beneficios y lecciones aprendidas.
+- **Administración:** usuarios, jefaturas, gerencias, responsables, indicadores y bitácora.
+- **Áreas:** Ventas, Almacén, Logística, Mantenimiento y áreas de soporte, sin duplicar funciones transaccionales de MicroSip.
 
-## Modulos incluidos
+El flujo central es:
 
-- Login por selector de Administrador General y jefaturas con clave corta.
-- Cierre de sesion conectado a Appwrite Auth.
-- Dashboard ejecutivo.
-- Panel Carmen.
-- Panel Gerencias.
-- Bitacora de cambios.
-- Filtros avanzados de reportes por fecha, gerencia, estatus, prioridad y tipo.
-- Exportacion CSV compatible con Excel para reportes y bitacora.
-- Vista PDF/imprimir para Dashboard ejecutivo, reportes y bitacora.
-- Captura de reportes.
-- Kanban por estatus.
-- Calendario mensual.
-- Modulos por gerencia:
-  - Produccion
-  - Calidad
-  - Compras
-  - Almacen
-  - Logistica
-  - Mantenimiento
-  - Ventas
-  - Recursos Humanos
-  - Contabilidad
-  - Sistemas
+`Proyecto -> Tarea -> Subtarea -> Responsable -> Fecha compromiso -> Evidencia -> KPI -> Cierre`
 
-## Flujo de operacion
+## Permisos
 
-1. La app intenta conectar con Appwrite y cargar gerencias/reportes.
-2. Si el servicio responde, el indicador superior muestra `Sistema en línea`.
-3. El usuario selecciona Administrador General o su jefatura e ingresa su clave corta. La sesion se valida contra Appwrite Auth.
-4. El sistema muestra solo los modulos permitidos para su rol.
-5. Administrador General puede revisar el dashboard ejecutivo, Panel Carmen, Gerencias, reportes, kanban y calendario.
-6. Direccion General puede consultar dashboard ejecutivo, reportes y calendario, sin edicion.
-7. Cada jefatura puede capturar reportes y revisar informacion de su propia area.
-8. Los reportes capturados se guardan en Appwrite y alimentan tarjetas, tablas, bandejas de autorizacion, kanban y vistas por gerencia.
-9. Administrador General puede editar reportes, aprobar, rechazar, cerrar o marcar falta de evidencia.
-10. Cada cambio relevante queda registrado en la tabla `bitacora` y puede consultarse desde el modulo Bitacora.
-11. Los reportes y bitacora pueden filtrarse y exportarse a CSV o enviarse a PDF/imprimir desde la interfaz.
-12. El usuario puede cerrar sesion desde el header superior.
+- Administrador General puede crear, editar, eliminar, reasignar, cerrar y reabrir registros.
+- Dirección consulta dashboards, reportes, calendario, riesgos y beneficios sin editar.
+- Cada jefatura solo ve y captura información de su propia área.
+- Appwrite aplica seguridad por fila; la interfaz refuerza el mismo alcance.
 
-## Backend Appwrite
+## Backend
 
-Proyecto Appwrite:
-
-- Project ID: `menlun-control-360`
-- Project name: `MENLUN Control 360`
-- Database ID: `menlun_control_360`
 - Endpoint: `https://nyc.cloud.appwrite.io/v1`
-- Configuracion frontend: `appwriteConfig.js`
+- Project ID: `menlun-control-360`
+- Database ID: `menlun_control_360`
+- Bucket: `evidencias`
+- Configuración pública: `appwriteConfig.js`
 
-La fuente unica de configuracion del frontend es `appwriteConfig.js`.
+El workflow manual `.github/workflows/setup-appwrite.yml` crea o actualiza tablas, datos iniciales, permisos y almacenamiento usando el secret `APPWRITE_API_KEY`.
 
-Tablas creadas:
+El workflow `.github/workflows/appwrite-heartbeat.yml` comprueba el estado y escribe actividad técnica. En Appwrite Free esto sirve como monitoreo, pero Appwrite puede pausar el proyecto según su política; no equivale a disponibilidad garantizada.
 
-- `gerencias`
-- `usuarios`
-- `reportes`
-- `autorizaciones`
-- `tareas`
-- `evidencias`
-- `bitacora`
-- `jefaturas`
-- `gastos`
-- `viaticos`
-- `mantenimientos`
+## Preparación del backend
 
-Storage creado:
+1. Configurar `APPWRITE_API_KEY` en **Settings > Secrets and variables > Actions**.
+2. Ejecutar **Actions > Prepare Appwrite backend > Run workflow**.
+3. Confirmar que finalicen los pasos de tablas y almacenamiento.
+4. Ejecutar **Appwrite heartbeat** y confirmar una corrida verde.
 
-- Bucket `evidencias`
-- Tipos permitidos: PDF, imagenes, Excel, Word y ZIP
-- Tamano maximo por archivo: 10 MB
-
-Hostnames registrados como Web Platform:
-
-- `127.0.0.1`
-- `localhost`
-- `pakostudio.github.io`
-
-El archivo [scripts/setup-appwrite.mjs](scripts/setup-appwrite.mjs) recrea/actualiza tablas, columnas, permisos y datos iniciales. Requiere una API key en variable de entorno:
+También puede prepararse localmente:
 
 ```bash
 APPWRITE_API_KEY="TU_API_KEY" node scripts/setup-appwrite.mjs
+APPWRITE_API_KEY="TU_API_KEY" node scripts/setup-appwrite-storage.mjs
 ```
 
-El archivo [scripts/setup-appwrite-auth.mjs](scripts/setup-appwrite-auth.mjs) crea/actualiza los usuarios reales de Appwrite Auth. Requiere una contrasena inicial segura mediante variable de entorno:
+## Evidencias
 
-```bash
-APPWRITE_API_KEY="TU_API_KEY" APPWRITE_INITIAL_PASSWORD="CONTRASENA_SEGURA" node scripts/setup-appwrite-auth.mjs
-```
-
-Despues de crear usuarios, cambia las contrasenas temporales desde Appwrite Auth antes de entregar accesos finales.
-
-El archivo [scripts/setup-appwrite-storage.mjs](scripts/setup-appwrite-storage.mjs) crea/actualiza el bucket real de evidencias.
-
-## Consideraciones operativas
-
-- El frontend lee/escribe en Appwrite y valida sesion con Appwrite Auth.
-- Si Appwrite no responde o el proyecto esta pausado, el sistema bloquea escrituras y muestra: `Proyecto Appwrite pausado o sin conexión. Restaurar proyecto desde Appwrite Console antes de continuar.`
-- Las tablas tienen seguridad por fila activa en Appwrite.
-- Las filas base quedan con permisos por usuario. Las filas creadas desde el frontend puro usan permisos de usuarios autenticados para permitir escritura sin exponer una API key; la visibilidad por rol se aplica desde la interfaz.
-- Las acciones administrativas quedan limitadas a Pako/Carmen desde interfaz.
-- La carga de evidencias ya usa Appwrite Storage; falta versionar evidencias y agregar previsualizacion avanzada.
-- La bitacora registra cambios principales y ya cuenta con pantalla de consulta, filtros y exportacion.
-- Los reportes cuentan con filtros y exportacion en Panel Carmen, Reportes, Kanban y modulos por gerencia.
-- La app registra una actividad diaria por usuario autenticado para dejar evidencia de uso operativo sin saturar la bitacora.
-- No se usa `localStorage` para datos operativos; la trazabilidad se registra en Appwrite.
-
-### Rutina temporal para Appwrite Free
-
-Appwrite Free puede pausar proyectos por inactividad. Para reducir el riesgo durante la fase de aprobacion del cliente, este repositorio incluye una rutina diaria en GitHub Actions:
-
-- Archivo: `.github/workflows/appwrite-heartbeat.yml`
-- Script: `scripts/appwrite-heartbeat.mjs`
-- Frecuencia: diaria a las 14:00 UTC y ejecucion manual desde GitHub Actions.
-- Accion: inserta un registro `heartbeat` en la tabla `bitacora`.
-
-Para activarla en GitHub:
-
-1. Ir al repositorio en GitHub.
-2. Entrar a **Settings > Secrets and variables > Actions**.
-3. Crear el Secret `APPWRITE_API_KEY` con una API key valida de Appwrite.
-4. Entrar a **Actions > Appwrite heartbeat**.
-5. Ejecutar **Run workflow** una vez para validar que registre correctamente.
-
-Esta rutina ayuda a monitorear y generar actividad tecnica, pero no sustituye un plan pagado si el cliente requiere disponibilidad garantizada. Antes de una demo importante, revisar manualmente que el proyecto siga activo en Appwrite Console.
-
-## Pendientes futuros
-
-- Migrar escrituras sensibles a Appwrite Functions o servidor propio para aplicar permisos finos por rol desde backend.
-- Migrar de permisos por usuario a Appwrite Teams si la plantilla de usuarios crece de forma masiva.
-- Agregar versionado de evidencias y previsualizacion avanzada.
-- Agregar permisos finos por accion.
-- Crear version movil optimizada.
-- Agregar pruebas automatizadas formales.
+El Centro de Evidencias acepta PDF, Word, Excel, CSV, ZIP, imágenes y video, con máximo de 10 MB por archivo. Cada evidencia se relaciona con un proyecto, tarea, acuerdo, incidencia o reunión.
 
 ## Despliegue en GitHub Pages
 
-1. Crear un repositorio en GitHub.
-2. Subir estos archivos al repositorio:
-   - `index.html`
-   - `styles.css`
-   - `appwriteConfig.js`
-   - `app.js`
-   - `assets/pmps-logo.png`
-   - `assets/pmps-icon.png`
-   - `README.md`
-   - `.github/workflows/appwrite-heartbeat.yml`
-   - `.gitignore`
-   - `scripts/appwrite-heartbeat.mjs`
-   - `scripts/setup-appwrite.mjs` si se desea conservar el instalador tecnico del backend
-   - `scripts/setup-appwrite-auth.mjs` si se desea conservar el instalador tecnico de usuarios
-   - `scripts/setup-appwrite-storage.mjs` si se desea conservar el instalador tecnico de evidencias
-3. Entrar a **Settings** del repositorio.
-4. Ir a **Pages**.
-5. En **Build and deployment**, seleccionar:
-   - Source: `Deploy from a branch`
-   - Branch: `main`
-   - Folder: `/root`
-6. Guardar la configuracion.
-7. Esperar a que GitHub genere la URL publica.
+1. Subir el repositorio completo a GitHub.
+2. Abrir **Settings > Pages**.
+3. Seleccionar **Deploy from a branch**, rama `main`, carpeta `/root`.
+4. Mantener `pakostudio.github.io` registrado como Web Platform en Appwrite.
+5. Ejecutar el workflow de preparación del backend después de cambios de esquema.
 
-La app puede ejecutarse directamente como sitio estatico porque no requiere compilacion. Para que Appwrite responda desde GitHub Pages, el hostname `pakostudio.github.io` debe permanecer registrado como Web Platform.
+No hay proceso de compilación. GitHub Pages publica directamente `index.html`, `styles.css`, `app.js`, `appwriteConfig.js` y `assets/`.
+
+## Riesgos operativos
+
+- Appwrite Free puede pausar proyectos; antes de una presentación debe verificarse la disponibilidad.
+- La disponibilidad garantizada requiere un plan con SLA o migrar el backend a una infraestructura acordada.
+- MicroSip continúa siendo la fuente transaccional; NEXUS no sustituye ni replica su contabilidad o inventarios.

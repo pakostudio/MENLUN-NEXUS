@@ -28,7 +28,8 @@ window.MENLUN_APPWRITE_CONFIG = {
     planTrabajo: "plan_trabajo",
     acuerdos: "acuerdos",
     riesgos: "riesgos",
-    beneficios: "beneficios"
+    beneficios: "beneficios",
+    lecciones: "lecciones_aprendidas"
   },
   buckets: {
     evidencias: "evidencias"

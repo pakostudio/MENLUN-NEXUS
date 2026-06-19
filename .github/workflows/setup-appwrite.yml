@@ -27,3 +27,10 @@ jobs:
           APPWRITE_PROJECT_ID: menlun-control-360
           APPWRITE_DATABASE_ID: menlun_control_360
         run: node scripts/setup-appwrite.mjs
+
+      - name: Prepare evidence storage
+        env:
+          APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
+          APPWRITE_ENDPOINT: https://nyc.cloud.appwrite.io/v1
+          APPWRITE_PROJECT_ID: menlun-control-360
+        run: node scripts/setup-appwrite-storage.mjs

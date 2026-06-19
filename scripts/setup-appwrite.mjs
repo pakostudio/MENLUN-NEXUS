@@ -575,6 +575,23 @@ const tables = [
     ]
   },
   {
+    id: "lecciones_aprendidas",
+    name: "Lecciones aprendidas",
+    columns: [
+      datetime("fecha", true),
+      string("area", 80, true),
+      string("contexto", 180, true),
+      text("leccion", true),
+      text("aplicacion", true),
+      string("responsable", 120, true),
+      string("evidencia", 180, false)
+    ],
+    rows: [
+      row("lec-001", { fecha: "2026-06-18T12:00:00.000Z", area: "Logística", contexto: "Liberación documental de entregas", leccion: "La evidencia debe validarse antes de liberar la ruta, no después de la entrega.", aplicacion: "Integrar checklist obligatorio a la tarea de liberación.", responsable: "Guillermo Nieto", evidencia: "mapa-ruta-v1.pdf" }),
+      row("lec-002", { fecha: "2026-06-19T12:00:00.000Z", area: "Mantenimiento", contexto: "Reincidencia del compresor", leccion: "Cerrar la orden sin causa raíz mantiene el riesgo operativo abierto.", aplicacion: "Exigir diagnóstico y acción preventiva antes del cierre.", responsable: "José Luis Sánchez", evidencia: "orden-servicio.pdf" })
+    ]
+  },
+  {
     id: "bitacora",
     name: "Bitacora",
     columns: [
@@ -756,7 +773,7 @@ function permissionsForRow(tableId, data, rowId = "") {
     ]);
   }
 
-  if (["diagnostico_base", "entrevistas", "mapa_dolor", "diagnostico_ejecutivo"].includes(tableId)) {
+  if (["diagnostico_base", "entrevistas", "mapa_dolor", "diagnostico_ejecutivo", "lecciones_aprendidas"].includes(tableId)) {
     const areaUserId = areaUserIds[data.area] || areaUserIds[data.areaAfectada];
     return uniquePermissions([
       ...readForUsers([...adminUserIds, ...executiveUserIds, areaUserId]),
