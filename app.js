@@ -661,7 +661,7 @@ async function appwriteRequest(path, options = {}) {
     const data = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
-      throw appwriteError(response.status, data.message);
+      throw appwriteError(response.status, data.message, data.type);
     }
 
     return data;
@@ -698,7 +698,7 @@ function xhrRequest(url, method, headers, body) {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(data);
       } else {
-        reject(appwriteError(xhr.status, data.message));
+        reject(appwriteError(xhr.status, data.message, data.type));
       }
     };
     xhr.onerror = () => reject(appwriteError(0, APPWRITE_PAUSED_MESSAGE));
@@ -742,10 +742,15 @@ async function ensureAppwriteWriteReady() {
   }
 }
 
-function appwriteError(status, message = "") {
+function appwriteError(status, message = "", type = "") {
   const error = new Error(message || `Error Appwrite ${status}`);
   error.status = status;
-  error.isAppwriteUnavailable = [0, 401, 403, 404, 429, 500, 502, 503, 504].includes(Number(status));
+  error.type = type;
+  error.isAppwriteUnavailable = Number(status) === 0
+    || Number(status) === 429
+    || Number(status) >= 500
+    || type === "project_paused"
+    || String(message).toLowerCase().includes("paused");
   if (error.isAppwriteUnavailable) error.message = APPWRITE_PAUSED_MESSAGE;
   return error;
 }
@@ -897,6 +902,13 @@ function userToAppwriteData(user) {
 }
 
 function permissionsForRow(tableId, data) {
+  if (activeUser?.access === "area") {
+    return uniquePermissions([
+      ...readPermissions([activeUser.userId]),
+      ...updatePermissions([activeUser.userId]),
+    ]);
+  }
+
   if (tableId === TABLES.usuarios) {
     const ownerId = USER_IDS_BY_EMAIL[String(data.email || "").toLowerCase()];
     return uniquePermissions([
@@ -947,6 +959,13 @@ function clientWritePermissions() {
 }
 
 function permissionsForArea(area, options = {}) {
+  if (activeUser?.access === "area") {
+    return uniquePermissions([
+      ...readPermissions([activeUser.userId]),
+      ...updatePermissions([activeUser.userId]),
+    ]);
+  }
+
   const areaUsers = [USER_IDS_BY_AREA[area], JEFATURA_IDS_BY_AREA[area]].filter(Boolean);
   const updateUsers = options.adminOnlyUpdate ? ADMIN_USER_IDS : [...ADMIN_USER_IDS, ...areaUsers];
 

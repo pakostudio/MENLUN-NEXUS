@@ -70,7 +70,12 @@ const adminCreateOnlyTables = new Set(["gerencias", "usuarios", "bitacora", "jef
 
 function permissionsForTable(tableId) {
   const creators = adminCreateOnlyTables.has(tableId) ? adminUserIds : [...adminUserIds, ...areaCreatorIds];
-  return creators.map((id) => `create("user:${id}")`);
+  return uniquePermissions([
+    ...readForUsers([...adminUserIds, ...executiveUserIds]),
+    ...updateForUsers(adminUserIds),
+    ...deleteForUsers(adminUserIds),
+    ...creators.map((id) => `create("user:${id}")`),
+  ]);
 }
 
 const tables = [

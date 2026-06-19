@@ -16,6 +16,10 @@ const headers = {
 
 const bucketId = "evidencias";
 const permissions = [
+  'read("user:pako")',
+  'read("user:direccion")',
+  'update("user:pako")',
+  'delete("user:pako")',
   'create("user:pako")',
   'create("user:jef-moises-prado")',
   'create("user:jef-guillermo-nieto")',
